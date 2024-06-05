@@ -2,14 +2,14 @@ const jwt = require("jsonwebtoken");
 
 const generateToken = (payload) => {
   const token = jwt.sign(payload, process.env.JWT_TOKEN, {
-    expiresIn: "1h",
+    expiresIn: "1d",
   });
   return token;
 };
 
 const generateRefreshToken = (payload) => {
   const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_TOKEN, {
-    expiresIn: "1d",
+    expiresIn: "7d",
   });
   return refreshToken;
 };

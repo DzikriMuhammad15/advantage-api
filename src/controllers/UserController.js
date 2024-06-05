@@ -33,7 +33,7 @@ const registerUser = async (req, res) => {
     );
     const docRef = await usersCollection.add({ ...newUser });
 
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       message: "User added successfully",
       data: {
@@ -88,7 +88,7 @@ const loginUser = async (req, res) => {
       role: userData.role,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       message: "Login successful",
       data: {
@@ -114,7 +114,7 @@ const loginUser = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { username, email, fullname, phone, role } = req.body;
+    const { username, email, fullname, phone } = req.body;
     const user = await usersCollection.doc(id).get();
     if (!user.exists) {
       return res.status(404).json({
@@ -128,12 +128,11 @@ const updateUser = async (req, res) => {
       email,
       fullname,
       phone,
-      role,
     };
 
     const updatedResult = await usersCollection.doc(id).update(updatedUser);
 
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       message: "User updated successfully",
       data: {
@@ -142,11 +141,10 @@ const updateUser = async (req, res) => {
         email: updatedUser.email,
         fullname: updatedUser.fullname,
         phone: updatedUser.phone,
-        role: updatedUser.role,
       },
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: "An error occurred while updating the user",
       error: error.message,
@@ -173,12 +171,12 @@ const updatePassword = async (req, res) => {
 
     await usersCollection.doc(id).update(updatedUser);
 
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       message: "Password updated successfully",
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: "An error occurred while updating the password",
       error: error.message,
@@ -190,13 +188,13 @@ const getUsers = async (req, res) => {
   try {
     const snapshot = await usersCollection.get();
     const users = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       message: "Users fetched successfully",
       data: users,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: "An error occurred while fetching users",
       error: error.message,
@@ -216,12 +214,12 @@ const deleteUser = async (req, res) => {
     }
 
     await usersCollection.doc(id).delete();
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       message: "User deleted successfully",
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: "An error occurred while deleting the user",
       error: error.message,

@@ -8,6 +8,9 @@ dotenv.config();
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: process.env.DATABASE_URL,
+  firestore: {
+    ignoreUndefinedProperties: true,
+  },
 });
 
 const router = require("./routes/index");
