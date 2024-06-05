@@ -27,14 +27,11 @@ const extractToken = (token) => {
   }
 
   if (resData) {
-    const result = new User(
-      resData.username,
-      resData.email,
-      resData.fullname,
-      resData.phone,
-      resData.password,
-      resData.role
-    );
+    const result = {
+      username: resData.username,
+      email: resData.email,
+      role: resData.role,
+    };
     return result;
   }
   return null;
