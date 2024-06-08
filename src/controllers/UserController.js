@@ -29,7 +29,8 @@ const registerUser = async (req, res) => {
       fullname,
       phone,
       hashedPassword,
-      role
+      role,
+      false
     );
     const docRef = await usersCollection.add({ ...newUser });
 
@@ -43,6 +44,7 @@ const registerUser = async (req, res) => {
         fullname: newUser.fullname,
         phone: newUser.phone,
         role: newUser.role,
+        isFillSurvey: newUser.isFillSurvey,
       },
     });
   } catch (error) {
@@ -66,11 +68,12 @@ const loginUser = async (req, res) => {
     }
 
     const userData = user.docs[0].data();
+    userData.id = user.docs[0].id;
     const match = await bcrypt.compare(password, userData.password);
     if (!match) {
       return res.status(400).json({
         status: false,
-        message: "Unauthorized",
+        message: "Your email or password is incorrect",
       });
     }
 
@@ -98,6 +101,7 @@ const loginUser = async (req, res) => {
         role: userData.role,
         fullname: userData.fullname,
         phone: userData.phone,
+        isFillSurvey: userData.isFillSurvey,
       },
       token: tokenData,
       refreshToken: refreshTokenData,

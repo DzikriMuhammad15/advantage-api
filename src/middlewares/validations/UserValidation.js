@@ -32,8 +32,7 @@ const registerValidation = async (req, res, next) => {
     if (userEmailQuery.docs.length > 0) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request",
-        errors: "Email already used",
+        message: "Email already used",
       });
     }
 
@@ -44,8 +43,7 @@ const registerValidation = async (req, res, next) => {
     if (userUsernameQuery.docs.length > 0) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request",
-        errors: "Username already used",
+        message: "Username already used",
       });
     }
 
