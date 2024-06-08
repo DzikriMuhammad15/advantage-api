@@ -231,6 +231,54 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const logoutUser = async (req, res) => {
+  try {
+    return res.status(200).json({
+      status: true,
+      message: "Logout successful",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: "An error occurred while logging out",
+      error: error.message,
+    });
+  }
+};
+
+const getDetailUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await usersCollection.doc(id).get();
+    if (!user.exists) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "User fetched successfully",
+      data: {
+        id: user.id,
+        username: user.data().username,
+        email: user.data().email,
+        fullname: user.data().fullname,
+        phone: user.data().phone,
+        role: user.data().role,
+        isFillSurvey: user.data().isFillSurvey,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: "An error occurred while fetching the user",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   registerUser,
   getUsers,
@@ -238,4 +286,6 @@ module.exports = {
   updateUser,
   updatePassword,
   deleteUser,
+  logoutUser,
+  getDetailUser,
 };
