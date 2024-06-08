@@ -3,6 +3,7 @@ const UserPreference = require("../models/UserPreferenceModel");
 
 const db = admin.firestore();
 const userPreferencesCollection = db.collection("user_preferences");
+const usersCollection = db.collection("users");
 
 const createUserPreferences = async (req, res) => {
   try {
@@ -22,6 +23,10 @@ const createUserPreferences = async (req, res) => {
       question3: newUserPreference.question3,
       question4: newUserPreference.question4,
     });
+
+    await usersCollection
+      .doc(newUserPreference.userId)
+      .update({ isFillSurvey: true });
 
     return res.status(200).json({
       status: true,
