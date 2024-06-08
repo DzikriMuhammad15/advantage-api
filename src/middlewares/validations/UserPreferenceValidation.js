@@ -33,8 +33,7 @@ const createUserPreferenceValidation = async (req, res, next) => {
     if (userPreferenceQuery.docs.length > 0) {
       return res.status(400).json({
         status: false,
-        message: "Bad Request",
-        errors: "User preference already exists",
+        message: "User preference already exists",
       });
     }
 
