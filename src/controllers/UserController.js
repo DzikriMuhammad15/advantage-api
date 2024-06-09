@@ -279,6 +279,34 @@ const getDetailUser = async (req, res) => {
   }
 };
 
+const updateSurveyStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isFillSurvey } = req.body;
+    const user = await usersCollection.doc(id).get();
+    if (!user.exists) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found",
+      });
+    }
+
+    await usersCollection.doc(id).update({ isFillSurvey });
+
+    return res.status(200).json({
+      status: true,
+      message: "Survey status updated successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: "An error occurred while updating the survey status",
+      error: error.message,
+    });
+  }
+};
+
+
 module.exports = {
   registerUser,
   getUsers,
@@ -288,4 +316,5 @@ module.exports = {
   deleteUser,
   logoutUser,
   getDetailUser,
+  updateSurveyStatus
 };
