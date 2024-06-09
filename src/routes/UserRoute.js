@@ -8,6 +8,7 @@ const {
   deleteUser,
   logoutUser,
   getDetailUser,
+  updateSurveyStatus
 } = require("../controllers/UserController");
 const {
   registerValidation,
@@ -26,5 +27,6 @@ router.post("/auth/logout", authenticate, logoutUser);
 router.put("/users/:id", authenticate, updateUserValidation, updateUser);
 router.patch("/users/password/:id", authenticate, updatePassword);
 router.delete("/users/:id", authenticate, deleteUser);
+router.patch("/users/survey/:id", authenticate, updateSurveyStatus);
 
 module.exports = router;
