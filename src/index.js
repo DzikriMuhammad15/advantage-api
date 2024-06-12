@@ -11,6 +11,7 @@ admin.initializeApp({
   firestore: {
     ignoreUndefinedProperties: true,
   },
+  storageBucket: process.env.STORAGE_BUCKET,
 });
 
 const router = require("./routes/index");
