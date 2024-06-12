@@ -1,135 +1,171 @@
 const admin = require("firebase-admin");
-const AdvertiseProduct = require("../models/AdvertiseProudctModel");
+const Product = require("../models/ProductModel");
+const { v4: uuidv4 } = require("uuid");
 
 const db = admin.firestore();
 const productsCollection = db.collection("products");
-
-const getAllProducts = async (req, res) => {
-    try {
-        const products = await productsCollection.get();
-        const returnObject = [];
-        products.forEach((doc) => {
-            let dataDoc = doc.data();
-            let idDoc = doc.id;
-            returnObject.push({ id: idDoc, ...dataDoc });
-        })
-        return res.status(400).json({
-            status: true,
-            message: "data fetched successfully",
-            data: returnObject
-        })
-    } catch (error) {
-        return res.status(500).json({
-            status: false,
-            message: "An error occurred while fetching product",
-            error: error.message,
-        });
-    }
-}
-
-const deleteProduct = async (req, res) => {
-    try {
-        // ambil dulu params dari requestnya
-        const id = req.params.id;
-        // cari docrefnya
-        const docRef = productsCollection.doc(id);
-        // jika hasilnya kosong, kembalikan 404
-        const doc = await docRef.get();
-        if (!doc.exists) {
-            return res.status(404).json({
-                status: false,
-                message: "not found"
-            })
-        }
-        else {
-            // jika hasilnya ada, hapus doc tersebut
-            await docRef.delete();
-            return res.status(200).json({
-                status: true,
-                message: "product deleted successfully"
-            })
-        }
-
-    }
-    catch (error) {
-        return res.status(500).json({
-            status: false,
-            message: "An error occurred while deleting product",
-            error: error.message,
-        });
-    }
-}
+const bucket = admin.storage().bucket();
 
 const addProduct = async (req, res) => {
-    try {
+  try {
+    const {
+      userId,
+      name,
+      description,
+      price,
+      locationDesc,
+      longitude,
+      latitude,
+      type,
+      theme,
+      category,
+      height,
+      width,
+    } = req.body;
 
-        const { name, description, locationDesc, longitude, latitude, imageUrl, type, theme, category, height, width, price, rating, isBooked, startBooked, endBooked } = req.body;
-        const newProduct = new AdvertiseProduct(name, description, locationDesc, longitude, latitude, imageUrl, type, theme, category, height, width, price, rating, isBooked, startBooked, endBooked);
-        const docRef = await productsCollection.add({ ...newProduct });
-        return res.status(200).json({
-            status: true,
-            message: "Product added successfully",
-            data: {
-                name: docRef.name,
-                description: docRef.description,
-                locationDesc: docRef.locationDesc,
-                longitude: docRef.longitude,
-                latitude: docRef.latitude,
-                imageUrl: docRef.imageUrl,
-                type: docRef.type,
-                theme: docRef.theme,
-                category: docRef.category,
-                height: docRef.height,
-                width: docRef.width,
-                price: docRef.price,
-                rating: docRef.rating,
-                isBooked: docRef.isBooked,
-                startBooked: docRef.startBooked,
-                endBooked: docRef.endBooked
-            },
-        });
+    const parsedPrice = parseFloat(price);
+    const parsedLongitude = parseFloat(longitude);
+    const parsedLatitude = parseFloat(latitude);
+    const parsedHeight = parseFloat(height);
+    const parsedWidth = parseFloat(width);
 
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({
+        status: false,
+        message: "No file uploaded",
+      });
     }
-    catch (error) {
-        return res.status(500).json({
-            status: false,
-            message: "An error occurred while adding product",
-            error: error.message,
-        });
-    }
-}
 
-const getProductById = async (req, res) => {
-    try {
-        // ambil dulu params dari requestnya
-        const id = req.params.id;
-        // cari docrefnya
-        const docRef = productsCollection.doc(id);
-        // jika hasilnya kosong, kembalikan 404
-        const doc = await docRef.get();
-        if (!doc.exists) {
-            return res.status(404).json({
-                status: false,
-                message: "not found"
-            })
-        }
-        else {
-            // jika hasilnya ada, hapus doc tersebut
-            return res.status(200).json({
-                status: true,
-                message: "data fetched successfully",
-                data: doc.data()
-            })
-        }
+    const blob = bucket.file(`product-images/${uuidv4()}_${file.originalname}`);
+    const blobStream = blob.createWriteStream({
+      metadata: {
+        contentType: file.mimetype,
+      },
+    });
 
-    }
-    catch (error) {
-        return res.status(500).json({
-            status: false,
-            message: "An error occurred while fetching product",
-            error: error.message,
-        });
-    }
-}
+    blobStream.on("error", (error) => {
+      return res.status(500).json({
+        status: false,
+        message: "Something went wrong while uploading the image",
+        error: error.message,
+      });
+    });
 
-module.exports = { getAllProducts, deleteProduct, addProduct, getProductById }
+    blobStream.on("finish", async () => {
+      await blob.makePublic();
+
+      const imageUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+      const newProduct = new Product(
+        userId,
+        name,
+        description,
+        parsedPrice,
+        locationDesc,
+        parsedLongitude,
+        parsedLatitude,
+        imageUrl,
+        type,
+        theme,
+        category,
+        parsedHeight,
+        parsedWidth,
+        0,
+        false,
+        "",
+        ""
+      );
+
+      const docRef = await productsCollection.add({
+        ...newProduct,
+      });
+
+      return res.status(201).json({
+        status: true,
+        message: "Product added successfully",
+        data: {
+          id: docRef.id,
+          ...newProduct,
+        },
+      });
+    });
+
+    blobStream.end(file.buffer);
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: "An error occurred while adding the product",
+      error: error.message,
+    });
+  }
+};
+
+const getProducts = async (req, res) => {
+  try {
+    const products = await productsCollection
+      .where("isBooked", "==", false)
+      .get();
+    if (products.empty) {
+      return res.status(404).json({
+        status: false,
+        message: "No products found",
+      });
+    }
+    return res.status(200).json({
+      status: true,
+      message: "Products retrieved successfully",
+      data: products.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: "An error occurred while retrieving the products",
+      error: error.message,
+    });
+  }
+};
+
+const bookProduct = async (req, res) => {
+  try {
+    const { productId, startBooked, endBooked } = req.body;
+    const product = await productsCollection.doc(productId).get();
+    if (!product.exists) {
+      return res.status(404).json({
+        status: false,
+        message: "Product not found",
+      });
+    }
+
+    const productData = product.data();
+    if (productData.isBooked) {
+      return res.status(400).json({
+        status: false,
+        message: "Product already booked",
+      });
+    }
+
+    const newProduct = {
+      ...productData,
+      isBooked: true,
+      startBooked,
+      endBooked,
+    };
+    await productsCollection.doc(productId).set(newProduct);
+    return res.status(200).json({
+      status: true,
+      message: "Product booked successfully",
+      data: newProduct,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: "An error occurred while booking the product",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = { addProduct, getProducts, bookProduct };

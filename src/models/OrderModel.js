@@ -1,0 +1,29 @@
+class Order {
+  constructor(
+    userId,
+    productId,
+    advertisingContentId,
+    fullname,
+    phone,
+    email,
+    paymentMethod,
+    startBooked,
+    endBooked,
+    status,
+    totalPayment
+  ) {
+    this.userId = userId;
+    this.productId = productId;
+    this.advertisingContentId = advertisingContentId;
+    this.fullname = fullname;
+    this.phone = phone;
+    this.email = email;
+    this.paymentMethod = paymentMethod;
+    this.startBooked = startBooked;
+    this.endBooked = endBooked;
+    this.status = status;
+    this.totalPayment = totalPayment;
+  }
+}
+
+module.exports = Order;
