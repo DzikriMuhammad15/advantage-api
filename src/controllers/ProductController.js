@@ -128,44 +128,4 @@ const getProducts = async (req, res) => {
   }
 };
 
-const bookProduct = async (req, res) => {
-  try {
-    const { productId, startBooked, endBooked } = req.body;
-    const product = await productsCollection.doc(productId).get();
-    if (!product.exists) {
-      return res.status(404).json({
-        status: false,
-        message: "Product not found",
-      });
-    }
-
-    const productData = product.data();
-    if (productData.isBooked) {
-      return res.status(400).json({
-        status: false,
-        message: "Product already booked",
-      });
-    }
-
-    const newProduct = {
-      ...productData,
-      isBooked: true,
-      startBooked,
-      endBooked,
-    };
-    await productsCollection.doc(productId).set(newProduct);
-    return res.status(200).json({
-      status: true,
-      message: "Product booked successfully",
-      data: newProduct,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: false,
-      message: "An error occurred while booking the product",
-      error: error.message,
-    });
-  }
-};
-
-module.exports = { addProduct, getProducts, bookProduct };
+module.exports = { addProduct, getProducts };

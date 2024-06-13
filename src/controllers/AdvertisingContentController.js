@@ -77,6 +77,34 @@ const addAdvertisingContent = async (req, res) => {
   }
 };
 
+const getAdvertisingContents = async (req, res) => {
+  try {
+    const advertisingContents = await advertisingContentsCollection.get();
+    if (advertisingContents.empty) {
+      return res.status(404).json({
+        status: false,
+        message: "No advertising contents found",
+      });
+    }
+    return res.status(200).json({
+      status: true,
+      message: "Advertising contents retrieved successfully",
+      data: advertisingContents.docs.map((doc) =>
+        ({
+          id: doc.id,
+          ...doc.data(),
+        })),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: "An error occurred while retrieving the advertising contents",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   addAdvertisingContent,
+  getAdvertisingContents
 };
