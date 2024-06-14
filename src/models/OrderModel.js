@@ -2,6 +2,10 @@ class Order {
   constructor(
     userId,
     productId,
+    imageProduct,
+    productName,
+    categoryProduct,
+    locationProduct,
     advertisingContentId,
     fullname,
     phone,
@@ -14,6 +18,10 @@ class Order {
   ) {
     this.userId = userId;
     this.productId = productId;
+    this.imageProduct = imageProduct;
+    this.productName = productName;
+    this.categoryProduct = categoryProduct;
+    this.locationProduct = locationProduct;
     this.advertisingContentId = advertisingContentId;
     this.fullname = fullname;
     this.phone = phone;
