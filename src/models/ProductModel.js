@@ -1,6 +1,10 @@
 class Product {
   constructor(
     userId,
+    userFullname,
+    userCompany,
+    userImage,
+    userPosition,
     name,
     description,
     price,
@@ -19,6 +23,10 @@ class Product {
     endBooked
   ) {
     this.userId = userId;
+    this.userFullname = userFullname;
+    this.userCompany = userCompany;
+    this.userImage = userImage;
+    this.userPosition = userPosition;
     this.name = name;
     this.description = description;
     this.price = price;
