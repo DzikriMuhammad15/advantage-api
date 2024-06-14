@@ -10,6 +10,10 @@ const addProduct = async (req, res) => {
   try {
     const {
       userId,
+      userFullname,
+      userCompany,
+      userImage,
+      userPosition,
       name,
       description,
       price,
@@ -58,6 +62,10 @@ const addProduct = async (req, res) => {
       const imageUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
       const newProduct = new Product(
         userId,
+        userFullname,
+        userCompany,
+        userImage,
+        userPosition,
         name,
         description,
         parsedPrice,
