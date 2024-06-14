@@ -10,6 +10,11 @@ const addOrder = async (req, res) => {
   try {
     const {
       userId,
+      productId,
+      imageProduct,
+      productName,
+      categoryProduct,
+      locationProduct,
       fullname,
       phone,
       email,
@@ -20,7 +25,11 @@ const addOrder = async (req, res) => {
     } = req.body;
     const order = new Order(
       userId,
-      "",
+      productId,
+      imageProduct,
+      productName,
+      categoryProduct,
+      locationProduct,
       "",
       fullname,
       phone,
@@ -134,7 +143,7 @@ const getOrdersByUserId = async (req, res) => {
 
 const createShowAdvertisement = async (req, res) => {
   try {
-    const { orderId, productId, advertisingContentId } = req.body;
+    const { orderId, advertisingContentId } = req.body;
 
     const orderDoc = await ordersCollection.doc(orderId).get();
 
@@ -167,7 +176,8 @@ const createShowAdvertisement = async (req, res) => {
     
     await ordersCollection.doc(orderId).update({
       advertisingContentId,
-      productId
+      productId,
+      status: "active"
     });
 
     const updatedOrderDoc = await ordersCollection.doc(orderId).get();

@@ -128,4 +128,35 @@ const getProducts = async (req, res) => {
   }
 };
 
-module.exports = { addProduct, getProducts };
+const getProductsByUserPreferences = async (req, res) => {
+  const { question1, question2, question3, question4 } = req.body;
+  console.log(question1, question2, question3, question4);
+
+  try {
+    const products = await productsCollection
+      .where("isBooked", "==", false)
+      .get();
+    if (products.empty) {
+      return res.status(404).json({
+        status: false,
+        message: "No products found",
+      });
+    }
+    return res.status(200).json({
+      status: true,
+      message: "Products retrieved successfully",
+      data: products.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: "An error occurred while retrieving the products",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = { addProduct, getProducts, getProductsByUserPreferences };
