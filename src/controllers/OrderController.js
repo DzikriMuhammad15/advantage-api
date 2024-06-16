@@ -41,6 +41,7 @@ const addOrder = async (req, res) => {
       totalPayment
     );
     const docRef = await ordersCollection.add({ ...order });
+    await productsCollection.doc(productId).update({ isBooked: true });
 
     return res.status(200).json({
       status: true,
@@ -114,9 +115,7 @@ const getOrders = async (req, res) => {
 const getOrdersByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
-    const orders = await ordersCollection
-      .where("userId", "==", userId)
-      .get();
+    const orders = await ordersCollection.where("userId", "==", userId).get();
 
     if (orders.empty) {
       return res.status(404).json({
@@ -136,7 +135,37 @@ const getOrdersByUserId = async (req, res) => {
     return res.status(500).json({
       status: false,
       message: "An error occurred while retrieving the orders",
-      error: error.message, 
+      error: error.message,
+    });
+  }
+};
+
+const getOrdersShowAdvertisementByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const orders = await ordersCollection
+      .where("userId", "==", userId)
+      .where("status", "in", ["approve", "rejected", "active", "ended"])
+      .get();
+    if (orders.empty) {
+      return res.status(404).json({
+        status: false,
+        message: "No show ads found",
+      });
+    }
+    return res.status(200).json({
+      status: true,
+      message: "Show Ads retrieved successfully",
+      data: orders.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: "An error occurred while retrieving the show ads",
+      error: error.message,
     });
   }
 };
@@ -154,30 +183,20 @@ const createShowAdvertisement = async (req, res) => {
       });
     }
 
-    const productDoc = await productsCollection.doc(productId).get();
-
-    if (!productDoc.exists) {
-      return res.status(404).json({
-        status: false,
-        message: "Product not found",
-      });
-    }
-
     const advertisingContentDoc = await advertisingContentsCollection
       .doc(advertisingContentId)
       .get();
-      
+
     if (!advertisingContentDoc.exists) {
       return res.status(404).json({
         status: false,
         message: "Advertising content not found",
       });
     }
-    
+
     await ordersCollection.doc(orderId).update({
       advertisingContentId,
-      productId,
-      status: "active"
+      status: "active",
     });
 
     const updatedOrderDoc = await ordersCollection.doc(orderId).get();
@@ -185,9 +204,11 @@ const createShowAdvertisement = async (req, res) => {
     return res.status(200).json({
       status: true,
       message: "Show advertisement created successfully",
-      data: updatedOrderDoc.data(),
+      data: {
+        id: updatedOrderDoc.id,
+        ...updatedOrderDoc.data(),
+      },
     });
-
   } catch (error) {
     return res.status(500).json({
       status: false,
@@ -221,4 +242,12 @@ const cancelOrder = async (req, res) => {
   }
 };
 
-module.exports = { addOrder, updateStatusOrder, getOrders, getOrdersByUserId, createShowAdvertisement, cancelOrder };
+module.exports = {
+  addOrder,
+  updateStatusOrder,
+  getOrders,
+  getOrdersByUserId,
+  getOrdersShowAdvertisementByUserId,
+  createShowAdvertisement,
+  cancelOrder,
+};

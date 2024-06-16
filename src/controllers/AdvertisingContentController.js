@@ -53,7 +53,7 @@ const addAdvertisingContent = async (req, res) => {
         name,
         category,
         imageUrl,
-        "pending"
+        "draft"
       );
       const docRef = await advertisingContentsCollection.add({
         ...newAdvertisingContent,
@@ -104,7 +104,38 @@ const getAdvertisingContents = async (req, res) => {
   }
 };
 
+const getAdvertisingContentsByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const advertisingContents = await advertisingContentsCollection
+      .where("userId", "==", userId)
+      .get();
+    if (advertisingContents.empty) {
+      return res.status(404).json({
+        status: false,
+        message: "No advertising contents found",
+      });
+    }
+    return res.status(200).json({
+      status: true,
+      message: "Advertising contents retrieved successfully",
+      data: advertisingContents.docs.map((doc) =>
+        ({
+          id: doc.id,
+          ...doc.data(),
+        })),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: "An error occurred while retrieving the advertising contents",
+      error: error.message,
+    });
+  }
+}
+
 module.exports = {
   addAdvertisingContent,
-  getAdvertisingContents
+  getAdvertisingContents,
+  getAdvertisingContentsByUserId
 };
