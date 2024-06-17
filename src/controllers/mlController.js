@@ -1,7 +1,12 @@
+const express = require('express');
 const bodyParser = require('body-parser');
 const tf = require('@tensorflow/tfjs-node');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
+const path = require('path');
+
+const app = express();
+app.use(bodyParser.json());
 
 // Load TensorFlow model
 let model;
@@ -17,7 +22,8 @@ loadModel();
 
 // Load Scaler
 const loadScaler = () => {
-    const scaler = JSON.parse(fs.readFileSync('scaler.json'));
+    const filePath = path.join(__dirname, 'scaler.json');
+    const scaler = JSON.parse(fs.readFileSync(filePath));
     return scaler;
 };
 

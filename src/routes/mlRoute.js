@@ -5,3 +5,5 @@ const { predict } = require("../controllers/mlController")
 const router = express.Router();
 
 router.post("/predict",)
+
+module.exports = router;
