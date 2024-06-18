@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 let model;
 const loadModel = async () => {
     try {
-        model = await tf.loadGraphModel('https://storage.googleapis.com/advantage-ml/models/model.json');
+        model = await tf.loadLayersModel('https://storage.googleapis.com/advantage-ml/models/model.json');
         console.log("Model loaded successfully");
     } catch (error) {
         console.error("Error loading model: " + error);
@@ -52,14 +52,18 @@ const normalizeData = (data, scaler) => {
 
 // Predict cluster
 const predictCluster = async (data) => {
+    console.log("1");
     const normalizedData = normalizeData(Object.values(data).flat(), scaler);
+    console.log("2");
     const predictions = model.predict(normalizedData);
+    console.log("3");
     const result = predictions.argMax(-1).dataSync()[0];
+    console.log("4");
     return result;
 };
 
 // Endpoint for predictions
-app.post('/predict', async (req, res) => {
+const predict = async (req, res) => {
     const { Jenis, Tema, Produk } = req.body;
     if (!Jenis || !Tema || !Produk) {
         return res.status(400).json({ status: 'fail', message: 'Invalid input' });
@@ -67,12 +71,16 @@ app.post('/predict', async (req, res) => {
 
     try {
         const filter = updateBasedOnConditions(Jenis, Tema, Produk);
+        // console.log(filter);
         const result = await predictCluster(filter);
+        // console.log("2");
 
         // Here you should integrate the clustering part
         // Assuming `data` is already loaded and contains your clustered data
         const data = []; // replace with your actual data
+        // console.log("3");
         const clust = data.filter(item => item.Cluster === result);
+        // console.log("4");
 
         res.status(200).json({
             status: 'success',
@@ -82,31 +90,11 @@ app.post('/predict', async (req, res) => {
                 Tema: item[Tema],
                 Produk: item[Produk],
                 Cluster: item.Cluster
-            }))
+            })),
+            hasilMl: result,
         });
     } catch (error) {
         res.status(500).json({ status: 'fail', message: 'Error making prediction', error: error.message });
     }
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const predict = async (req, res) => {
-
 }
-
 module.exports = { predict }
