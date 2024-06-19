@@ -31,11 +31,11 @@ const scaler = loadScaler();
 
 // Update DataFrame based on conditions
 const updateBasedOnConditions = (Jenis, Tema, Produk) => {
-    const kolom = {
+    kolom = {
         'Billboard': [0], 'Spanduk': [0], 'Signage': [0], 'Baliho': [0],
-        'Teknologi': [0], 'FnB': [0], 'Pariwisata': [0], 'Fashion': [0], 'Edukasi': [0], 'Kesehatan': [0], 'Otomotif': [0], 'Properti': [0], 'Hiburan': [0],
-        'Teknologi_Prod': [0], 'Restoran': [0], 'Hotel': [0], 'Pakaian_Aksesoris': [0], 'Kursus': [0], 'Klinik': [0], 'Kendaraan': [0], 'Rumah_Apart': [0], 'Travel': [0]
-    };
+        'FnB': [0], 'Fashion': [0], 'Edukasi': [0], 'Kesehatan': [0], 'Hiburan': [0],
+        'Restoran': [0], 'Pakaian_Aksesoris': [0], 'Kursus_Sekolah': [0], 'Klinik_RumahSakit': [0], 'Hiburan_Travel': [0]
+    }
     kolom[Jenis][0] = 1;
     kolom[Tema][0] = 1;
     kolom[Produk][0] = 1;
