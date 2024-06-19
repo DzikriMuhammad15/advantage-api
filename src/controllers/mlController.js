@@ -1,7 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const tf = require('@tensorflow/tfjs-node');
-const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const path = require('path');
 
@@ -23,19 +22,25 @@ loadModel();
 // Load Scaler
 const loadScaler = () => {
     const filePath = path.join(__dirname, 'scaler.json');
-    const scaler = JSON.parse(fs.readFileSync(filePath));
-    return scaler;
+    try {
+        const scaler = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        console.log("Loaded scaler:", scaler);
+        return scaler;
+    } catch (error) {
+        console.error("Error loading scaler: " + error);
+        return null;
+    }
 };
 
 const scaler = loadScaler();
 
 // Update DataFrame based on conditions
 const updateBasedOnConditions = (Jenis, Tema, Produk) => {
-    kolom = {
+    let kolom = {
         'Billboard': [0], 'Spanduk': [0], 'Signage': [0], 'Baliho': [0],
         'FnB': [0], 'Fashion': [0], 'Edukasi': [0], 'Kesehatan': [0], 'Hiburan': [0],
         'Restoran': [0], 'Pakaian_Aksesoris': [0], 'Kursus_Sekolah': [0], 'Klinik_RumahSakit': [0], 'Hiburan_Travel': [0]
-    }
+    };
     kolom[Jenis][0] = 1;
     kolom[Tema][0] = 1;
     kolom[Produk][0] = 1;
@@ -44,21 +49,40 @@ const updateBasedOnConditions = (Jenis, Tema, Produk) => {
 
 // Normalize data using the scaler
 const normalizeData = (data, scaler) => {
+    if (!Array.isArray(data) || data.length === 0) {
+        throw new Error("Data for normalization is invalid");
+    }
+    if (!scaler || !Array.isArray(scaler.mean) || !Array.isArray(scaler.var)) {
+        console.error("Scaler content:", scaler);
+        throw new Error("Scaler is invalid");
+    }
+
     const mean = tf.tensor1d(scaler.mean);
-    const variance = tf.tensor1d(scaler.variance);
+    const variance = tf.tensor1d(scaler.var);
     const tensorData = tf.tensor2d([data], [1, data.length]);
-    return tensorData.sub(mean).div(variance.sqrt());
+
+    console.log("Tensor data before normalization:", tensorData.toString());
+    const normalizedData = tensorData.sub(mean).div(variance.sqrt());
+    console.log("Normalized data:", normalizedData.toString());
+    return normalizedData;
 };
 
 // Predict cluster
 const predictCluster = async (data) => {
-    console.log("1");
-    const normalizedData = normalizeData(Object.values(data).flat(), scaler);
-    console.log("2");
+    console.log("Predict cluster data:", data);
+    const flatData = Object.values(data).flat();
+    console.log("Flat data:", flatData);
+
+    if (flatData.includes(null) || flatData.includes(undefined)) {
+        throw new Error("Flat data contains null or undefined values");
+    }
+
+    const normalizedData = normalizeData(flatData, scaler);
+    console.log("Normalized data:", normalizedData.toString());
     const predictions = model.predict(normalizedData);
-    console.log("3");
+    predictions.print(); // Log the predictions
     const result = predictions.argMax(-1).dataSync()[0];
-    console.log("4");
+    console.log("Prediction result:", result);
     return result;
 };
 
@@ -70,17 +94,18 @@ const predict = async (req, res) => {
     }
 
     try {
+        console.log("Received input:", { Jenis, Tema, Produk });
         const filter = updateBasedOnConditions(Jenis, Tema, Produk);
-        // console.log(filter);
+        console.log("Updated conditions:", filter);
         const result = await predictCluster(filter);
-        // console.log("2");
+        console.log("Cluster prediction result:", result);
 
         // Here you should integrate the clustering part
         // Assuming `data` is already loaded and contains your clustered data
         const data = []; // replace with your actual data
-        // console.log("3");
+        console.log("Clustered data:", data);
         const clust = data.filter(item => item.Cluster === result);
-        // console.log("4");
+        console.log("Filtered data:", clust);
 
         res.status(200).json({
             status: 'success',
@@ -94,7 +119,8 @@ const predict = async (req, res) => {
             hasilMl: result,
         });
     } catch (error) {
+        console.error("Error during prediction:", error);
         res.status(500).json({ status: 'fail', message: 'Error making prediction', error: error.message });
     }
-}
+};
 module.exports = { predict }
