@@ -3,6 +3,16 @@ const bodyParser = require('body-parser');
 const tf = require('@tensorflow/tfjs-node');
 const fs = require('fs');
 const path = require('path');
+const csv = require('csv-parser');
+
+const admin = require("firebase-admin");
+const Product = require("../models/ProductModel");
+const { v4: uuidv4 } = require("uuid");
+
+const db = admin.firestore();
+const productsCollection = db.collection("products");
+const bucket = admin.storage().bucket();
+
 
 const app = express();
 app.use(bodyParser.json());
@@ -97,27 +107,67 @@ const predict = async (req, res) => {
         console.log("Received input:", { Jenis, Tema, Produk });
         const filter = updateBasedOnConditions(Jenis, Tema, Produk);
         console.log("Updated conditions:", filter);
-        const result = await predictCluster(filter);
+        const hasil = await predictCluster(filter);
+        const result = hasil.toString();
         console.log("Cluster prediction result:", result);
 
         // Here you should integrate the clustering part
         // Assuming `data` is already loaded and contains your clustered data
-        const data = []; // replace with your actual data
-        console.log("Clustered data:", data);
-        const clust = data.filter(item => item.Cluster === result);
-        console.log("Filtered data:", clust);
+        let results = [];
+        const csvFilePath = path.join(__dirname, 'data_final2.csv'); // Ganti 'your-file.csv' dengan nama file CSV Anda
 
-        res.status(200).json({
-            status: 'success',
-            message: 'Prediction made successfully',
-            data: clust.map(item => ({
-                Jenis: item[Jenis],
-                Tema: item[Tema],
-                Produk: item[Produk],
-                Cluster: item.Cluster
-            })),
-            hasilMl: result,
-        });
+        fs.createReadStream(csvFilePath)
+            .pipe(csv())
+            .on('data', (data) => results.push(data))
+            .on('end', async () => {
+                results = results.map((el) => {
+                    el.Latitude = parseFloat(el.Latitude);
+                    el.Longitude = parseFloat(el.Longitude);
+                    return el;
+                });
+
+                // console.log("Clustered data:", results);
+                const clust = results.filter(item => item.Cluster === result);
+                // console.log("Filtered data:", clust);
+
+                let returnVal = [];
+                // ambil dari firestore
+                const fetchProductsPromises = clust.map(async (el) => {
+                    console.log({ lat: el.Latitude, long: el.Longitude });
+                    try {
+                        const productsSnapshot = await productsCollection
+                            .where("latitude", "==", el.Latitude)
+                            .where("longitude", "==", el.Longitude)
+                            .get();
+
+                        if (productsSnapshot.empty) {
+                            console.log('No matching documents.');
+                            return;
+                        }
+
+                        productsSnapshot.forEach(doc => {
+                            console.log("masuk");
+                            returnVal.push({ id: doc.id, ...doc.data() });
+                            console.log(returnVal);
+                        });
+                    } catch (error) {
+                        console.error('Error getting documents: ', error);
+                    }
+                });
+
+                await Promise.all(fetchProductsPromises);
+
+                res.status(200).json({
+                    status: 'success',
+                    message: 'Prediction made successfully',
+                    data: returnVal,
+                    hasilMl: result,
+                });
+
+            })
+            .on('error', (error) => {
+                res.status(500).send('Error reading the CSV file: ' + error.message);
+            });
     } catch (error) {
         console.error("Error during prediction:", error);
         res.status(500).json({ status: 'fail', message: 'Error making prediction', error: error.message });
