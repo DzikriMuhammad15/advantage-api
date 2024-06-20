@@ -166,10 +166,9 @@ const predict = async (req, res) => {
         await Promise.all(fetchProductsPromises);
 
         res.status(200).json({
-          status: "success",
-          message: "Prediction made successfully",
+          status: true,
+          message: "Products retrieved successfully",
           data: returnVal,
-          hasilMl: result,
         });
       })
       .on("error", (error) => {
